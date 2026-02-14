@@ -3,42 +3,6 @@ const observer = new IntersectionObserver(entries => {
 }, { threshold: 0.15 });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// Accordion single-open with aria + scrollable content for long panels (fix #4)
-const headers = document.querySelectorAll('.accordion-header');
-const contents = document.querySelectorAll('.accordion-content');
-
-function closeAll() {
-  headers.forEach(h => h.setAttribute('aria-expanded', 'false'));
-  contents.forEach(c => {
-    c.classList.remove('open');
-    c.style.maxHeight = null;
-  });
-}
-
-function openPanel(button, content) {
-  button.setAttribute('aria-expanded', 'true');
-  content.classList.add('open');
-  // set to 70vh (handled by CSS), but keep a numeric maxHeight to animate open
-  content.style.maxHeight = Math.min(content.scrollHeight, window.innerHeight * 0.7) + "px";
-  // If images load after opening, recalc
-  content.querySelectorAll('img').forEach(img => {
-    img.addEventListener('load', () => {
-      if (button.getAttribute('aria-expanded') === 'true') {
-        content.style.maxHeight = Math.min(content.scrollHeight, window.innerHeight * 0.7) + "px";
-      }
-    }, { once: true });
-  });
-}
-
-headers.forEach(button => {
-  button.addEventListener('click', () => {
-    const content = button.parentElement.querySelector('.accordion-content');
-    const isExpanded = button.getAttribute('aria-expanded') === 'true';
-    closeAll();
-    if (!isExpanded) openPanel(button, content);
-  });
-});
-
 // Mobile hamburger menu should only appear on mobile (fix #1)
 const hamburger = document.querySelector('.hamburger');
 const mobileMenu = document.getElementById('mobileMenu');
@@ -64,33 +28,38 @@ document.addEventListener('click', (e) => {
 // If resized to desktop, force-close the mobile menu (fix #1)
 window.addEventListener('resize', () => {
   if (window.matchMedia('(min-width: 981px)').matches) closeMobileMenu();
-  // also adjust any open accordion height on resize
-  const openContent = document.querySelector('.accordion-content.open');
-  const openHeader = document.querySelector('.accordion-header[aria-expanded="true"]');
-  if (openContent && openHeader) {
-    openContent.style.maxHeight = Math.min(openContent.scrollHeight, window.innerHeight * 0.7) + "px";
-  }
 });
 
 // Timeline carousel controls
 const timelineTrack = document.getElementById('timelineTrack');
-const prevBtn = document.getElementById('timelinePrev');
-const nextBtn = document.getElementById('timelineNext');
+const timelinePrevBtn = document.getElementById('timelinePrev');
+const timelineNextBtn = document.getElementById('timelineNext');
 
-function scrollByCard(direction) {
+function timelineScrollByCard(direction) {
   if (!timelineTrack) return;
   const card = timelineTrack.querySelector('.timeline-card');
   const delta = card ? (card.getBoundingClientRect().width + 16) : 420; // includes gap
   timelineTrack.scrollBy({ left: direction * delta, behavior: 'smooth' });
 }
 
-if (prevBtn && nextBtn && timelineTrack) {
-  prevBtn.addEventListener('click', () => scrollByCard(-1));
-  nextBtn.addEventListener('click', () => scrollByCard(1));
+if (timelinePrevBtn && timelineNextBtn && timelineTrack) {
+  timelinePrevBtn.addEventListener('click', () => timelineScrollByCard(-1));
+  timelineNextBtn.addEventListener('click', () => timelineScrollByCard(1));
+}
 
-  // Keyboard: left/right when focused
-  timelineTrack.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') scrollByCard(-1);
-    if (e.key === 'ArrowRight') scrollByCard(1);
-  });
+// Case Studies carousel controls
+const caseTrack = document.getElementById('caseTrack');
+const casePrevBtn = document.getElementById('casePrev');
+const caseNextBtn = document.getElementById('caseNext');
+
+function caseScrollByCard(direction) {
+  if (!caseTrack) return;
+  const card = caseTrack.querySelector('.case-card');
+  const delta = card ? (card.getBoundingClientRect().width + 16) : 420; // includes gap
+  caseTrack.scrollBy({ left: direction * delta, behavior: 'smooth' });
+}
+
+if (casePrevBtn && caseNextBtn && caseTrack) {
+  casePrevBtn.addEventListener('click', () => caseScrollByCard(-1));
+  caseNextBtn.addEventListener('click', () => caseScrollByCard(1));
 }
