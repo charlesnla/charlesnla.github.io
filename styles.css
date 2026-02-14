@@ -217,7 +217,7 @@ a {
 }
 
 .section-content {
-  min-height: calc(100vh - var(--nav-h));
+  min-height: calc(90vh - var(--nav-h));
 }
 
 .dark-content {
