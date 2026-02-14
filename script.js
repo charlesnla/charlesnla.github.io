@@ -21,10 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     revealEls.forEach(el => observer.observe(el));
     markVisibleIfInView();
     window.addEventListener('resize', markVisibleIfInView);
-//    window.addEventListener('hashchange', () => setTimeout(markVisibleIfInView, 50));
     document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', () => setTimeout(markVisibleIfInView, 120)));
   } else {
-    // No animation / reduced motion
     revealEls.forEach(el => el.classList.add('visible'));
   }
 
