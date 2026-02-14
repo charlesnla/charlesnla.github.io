@@ -78,7 +78,6 @@ a {
   font-weight: 600;
 }
 
-/* Hero */
 .hero {
   min-height: calc(100vh - var(--nav-height));
   background: linear-gradient(180deg, #0f172a, #1e293b);
@@ -187,7 +186,7 @@ a {
   margin-bottom: 1rem;
 }
 
-.about p {
+.aboutInfo {
   margin-top: 1rem;
 }
 
