@@ -1,65 +1,95 @@
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
-}, { threshold: 0.15 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+document.addEventListener('DOMContentLoaded', () => {
+  /* Scroll reveal */
+  const revealEls = Array.from(document.querySelectorAll('.reveal'));
 
-// Mobile hamburger menu should only appear on mobile (fix #1)
-const hamburger = document.querySelector('.hamburger');
-const mobileMenu = document.getElementById('mobileMenu');
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function closeMobileMenu() {
-  hamburger.setAttribute('aria-expanded', 'false');
-  mobileMenu.hidden = true;
-}
+  const markVisibleIfInView = () => {
+    revealEls.forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight * 0.92 && r.bottom > 0) el.classList.add('visible');
+    });
+  };
 
-hamburger.addEventListener('click', () => {
-  const expanded = hamburger.getAttribute('aria-expanded') === 'true';
-  hamburger.setAttribute('aria-expanded', String(!expanded));
-  mobileMenu.hidden = expanded;
+  if (!prefersReduced && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+
+    revealEls.forEach(el => observer.observe(el));
+    markVisibleIfInView();
+    window.addEventListener('resize', markVisibleIfInView);
+    window.addEventListener('hashchange', () => setTimeout(markVisibleIfInView, 50));
+    document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', () => setTimeout(markVisibleIfInView, 120)));
+  } else {
+    // No animation / reduced motion
+    revealEls.forEach(el => el.classList.add('visible'));
+  }
+
+  /* Hero "cool reveal" */
+  document.body.classList.add('hero-animate');
+
+  /* Mobile menu */
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+
+  function closeMobileMenu() {
+    if (!hamburger || !mobileMenu) return;
+    hamburger.setAttribute('aria-expanded', 'false');
+    mobileMenu.hidden = true;
+  }
+
+  hamburger?.addEventListener('click', () => {
+    const expanded = hamburger.getAttribute('aria-expanded') === 'true';
+    hamburger.setAttribute('aria-expanded', String(!expanded));
+    mobileMenu.hidden = expanded;
+  });
+
+  mobileMenu?.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMobileMenu(); });
+  document.addEventListener('click', (e) => {
+    const withinNav = e.target.closest('.nav');
+    if (!withinNav && mobileMenu && !mobileMenu.hidden) closeMobileMenu();
+  });
+  window.addEventListener('resize', () => {
+    if (window.matchMedia('(min-width: 981px)').matches) closeMobileMenu();
+  });
+
+  /* Flip cards: click (no hover) */
+  document.querySelectorAll('.js-flip').forEach(card => {
+    const toggle = () => card.classList.toggle('is-flipped');
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+    });
+  });
+
+  /* Carousel helpers */
+  function wireCarousel(trackId, prevId, nextId) {
+    const track = document.getElementById(trackId);
+    const prev = document.getElementById(prevId);
+    const next = document.getElementById(nextId);
+    if (!track || !prev || !next) return;
+
+    const step = () => {
+      const first = track.querySelector(':scope > *');
+      return first ? (first.getBoundingClientRect().width + 16) : 420;
+    };
+
+    prev.addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    next.addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
+
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') track.scrollBy({ left: -step(), behavior: 'smooth' });
+      if (e.key === 'ArrowRight') track.scrollBy({ left: step(), behavior: 'smooth' });
+    });
+  }
+
+  wireCarousel('timelineTrack', 'timelinePrev', 'timelineNext');
+  wireCarousel('writingTrack', 'writingPrev', 'writingNext');
 });
-
-mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMobileMenu));
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMobileMenu(); });
-document.addEventListener('click', (e) => {
-  const withinNav = e.target.closest('.nav');
-  if (!withinNav && !mobileMenu.hidden) closeMobileMenu();
-});
-
-// If resized to desktop, force-close the mobile menu (fix #1)
-window.addEventListener('resize', () => {
-  if (window.matchMedia('(min-width: 981px)').matches) closeMobileMenu();
-});
-
-// Timeline carousel controls
-const timelineTrack = document.getElementById('timelineTrack');
-const timelinePrevBtn = document.getElementById('timelinePrev');
-const timelineNextBtn = document.getElementById('timelineNext');
-
-function timelineScrollByCard(direction) {
-  if (!timelineTrack) return;
-  const card = timelineTrack.querySelector('.timeline-card');
-  const delta = card ? (card.getBoundingClientRect().width + 16) : 420; // includes gap
-  timelineTrack.scrollBy({ left: direction * delta, behavior: 'smooth' });
-}
-
-if (timelinePrevBtn && timelineNextBtn && timelineTrack) {
-  timelinePrevBtn.addEventListener('click', () => timelineScrollByCard(-1));
-  timelineNextBtn.addEventListener('click', () => timelineScrollByCard(1));
-}
-
-// Case Studies carousel controls
-const caseTrack = document.getElementById('caseTrack');
-const casePrevBtn = document.getElementById('casePrev');
-const caseNextBtn = document.getElementById('caseNext');
-
-function caseScrollByCard(direction) {
-  if (!caseTrack) return;
-  const card = caseTrack.querySelector('.case-card');
-  const delta = card ? (card.getBoundingClientRect().width + 16) : 420; // includes gap
-  caseTrack.scrollBy({ left: direction * delta, behavior: 'smooth' });
-}
-
-if (casePrevBtn && caseNextBtn && caseTrack) {
-  casePrevBtn.addEventListener('click', () => caseScrollByCard(-1));
-  caseNextBtn.addEventListener('click', () => caseScrollByCard(1));
-}
